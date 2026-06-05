@@ -1,5 +1,5 @@
-import React, { useMemo } from 'react';
-import { View, Text, ScrollView, StyleSheet, useWindowDimensions } from 'react-native';
+import React, { useMemo, useState } from 'react';
+import { View, Text, StyleSheet } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
 import { WorkoutSession } from '../types';
 
@@ -13,9 +13,9 @@ interface Props {
 
 export function ContributionCalendar({ sessions }: Props) {
   const { colors } = useTheme();
-  const { width } = useWindowDimensions();
+  const [innerWidth, setInnerWidth] = useState(0);
   const c = colors;
-  const cellSize = Math.floor((Math.min(width, 390) - 40 - WEEKS * 2) / WEEKS);
+  const cellSize = innerWidth > 0 ? Math.floor((innerWidth - WEEKS * 2) / WEEKS) : 6;
 
   const grid = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -43,7 +43,10 @@ export function ContributionCalendar({ sessions }: Props) {
   const levelColors = [c.surface3, '#166534', '#16a34a', '#22c55e', '#4ade80'];
 
   return (
-    <View style={[styles.card, { backgroundColor: c.surface, borderColor: c.border }]}>
+    <View
+      style={[styles.card, { backgroundColor: c.surface, borderColor: c.border }]}
+      onLayout={e => setInnerWidth(e.nativeEvent.layout.width - 32)}
+    >
       <View style={styles.topRow}>
         <Text style={[styles.label, { color: c.text }]}>Year Progress</Text>
         <Text style={[styles.count, { color: c.text3 }]}>{sessions.length} workouts</Text>
@@ -53,16 +56,14 @@ export function ContributionCalendar({ sessions }: Props) {
           <Text key={m} style={[styles.month, { color: c.text3, width: (cellSize + 2) * 4.4 }]}>{m}</Text>
         ))}
       </View>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-        <View style={[styles.grid, { width: WEEKS * (cellSize + 2) }]}>
-          {grid.map((cell, i) => (
-            <View
-              key={i}
-              style={[styles.cell, { width: cellSize, height: cellSize, backgroundColor: levelColors[cell.level] }]}
-            />
-          ))}
-        </View>
-      </ScrollView>
+      <View style={[styles.grid, { width: WEEKS * (cellSize + 2) }]}>
+        {grid.map((cell, i) => (
+          <View
+            key={i}
+            style={[styles.cell, { width: cellSize, height: cellSize, backgroundColor: levelColors[cell.level] }]}
+          />
+        ))}
+      </View>
       <View style={styles.legend}>
         <Text style={[styles.legendTxt, { color: c.text3 }]}>Less</Text>
         {levelColors.map((bg, i) => (

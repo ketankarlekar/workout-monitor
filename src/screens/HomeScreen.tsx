@@ -64,14 +64,6 @@ export default function HomeScreen() {
           ))}
         </View>
 
-        {/* Contribution calendar */}
-        <View style={styles.sectionHeader}>
-          <Text style={[styles.sectionTitle, { color: c.text3 }]}>YEAR PROGRESS</Text>
-        </View>
-        <View style={styles.padH}>
-          <ContributionCalendar sessions={state.sessions} />
-        </View>
-
         {/* Stats */}
         <View style={styles.sectionHeader}>
           <Text style={[styles.sectionTitle, { color: c.text3 }]}>STATS</Text>
@@ -88,6 +80,14 @@ export default function HomeScreen() {
             </View>
             <Text style={{ fontSize: 28 }}>✅</Text>
           </View>
+        </View>
+
+        {/* Contribution calendar */}
+        <View style={styles.sectionHeader}>
+          <Text style={[styles.sectionTitle, { color: c.text3 }]}>YEAR PROGRESS</Text>
+        </View>
+        <View style={styles.padH}>
+          <ContributionCalendar sessions={state.sessions} />
         </View>
         <View style={{ height: 24 }} />
       </ScrollView>
