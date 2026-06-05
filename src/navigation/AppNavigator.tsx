@@ -1,94 +1,113 @@
 import React from 'react';
-import { View, ActivityIndicator } from 'react-native';
-import { NavigationContainer } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Ionicons } from '@expo/vector-icons';
-import { RootStackParamList, TabParamList, AuthStackParamList } from '../types';
-import { COLORS } from '../theme';
-import { useAuth } from '../context/AuthContext';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { Text, View } from 'react-native';
+import { useTheme } from '../context/ThemeContext';
 import HomeScreen from '../screens/HomeScreen';
-import LogWorkoutScreen from '../screens/LogWorkoutScreen';
+import WorkoutScreen from '../screens/WorkoutScreen';
 import HistoryScreen from '../screens/HistoryScreen';
-import WorkoutDetailScreen from '../screens/WorkoutDetailScreen';
-import LoginScreen from '../screens/LoginScreen';
-import RegisterScreen from '../screens/RegisterScreen';
 
-const Stack = createNativeStackNavigator<RootStackParamList>();
-const Tab = createBottomTabNavigator<TabParamList>();
-const AuthStack = createNativeStackNavigator<AuthStackParamList>();
+const Tab = createBottomTabNavigator();
+const Stack = createNativeStackNavigator();
+
+function TabIcon({ emoji, label, focused, color }: { emoji: string; label: string; focused: boolean; color: string }) {
+  return (
+    <View style={{ alignItems: 'center', gap: 3 }}>
+      <Text style={{ fontSize: 22 }}>{emoji}</Text>
+      <Text style={{ fontSize: 10, fontWeight: '500', color }}>{label}</Text>
+    </View>
+  );
+}
+
+const PushScreen = () => <WorkoutScreen workoutType="push" />;
+const PullScreen = () => <WorkoutScreen workoutType="pull" />;
+const LegsScreen = () => <WorkoutScreen workoutType="legs" />;
+const SaturdayScreen = () => <WorkoutScreen workoutType="saturday" />;
 
 function MainTabs() {
+  const { colors } = useTheme();
+  const c = colors;
+
   return (
     <Tab.Navigator
-      screenOptions={({ route }) => ({
-        tabBarIcon: ({ focused, color, size }) => {
-          let iconName: keyof typeof Ionicons.glyphMap;
-          if (route.name === 'Home') {
-            iconName = focused ? 'home' : 'home-outline';
-          } else if (route.name === 'Log') {
-            iconName = focused ? 'barbell' : 'barbell-outline';
-          } else {
-            iconName = focused ? 'calendar' : 'calendar-outline';
-          }
-          return <Ionicons name={iconName} size={size} color={color} />;
-        },
-        tabBarActiveTintColor: COLORS.primary,
-        tabBarInactiveTintColor: COLORS.textSecondary,
+      screenOptions={{
+        headerShown: false,
         tabBarStyle: {
-          borderTopColor: COLORS.border,
-          backgroundColor: COLORS.surface,
+          backgroundColor: c.surface,
+          borderTopColor: c.border,
+          borderTopWidth: 1,
+          paddingBottom: 8,
+          paddingTop: 8,
+          height: 64,
         },
-        headerStyle: { backgroundColor: COLORS.surface },
-        headerTitleStyle: { fontWeight: '700', color: COLORS.text },
-        headerShadowVisible: false,
-      })}
+        tabBarShowLabel: false,
+      }}
     >
-      <Tab.Screen name="Home" component={HomeScreen} options={{ title: 'Home' }} />
-      <Tab.Screen name="Log" component={LogWorkoutScreen} options={{ title: 'Log Workout' }} />
-      <Tab.Screen name="History" component={HistoryScreen} options={{ title: 'History' }} />
+      <Tab.Screen
+        name="Home"
+        component={HomeScreen}
+        options={{
+          tabBarIcon: ({ focused, color }) => <TabIcon emoji="🏠" label="Home" focused={focused} color={color} />,
+          tabBarActiveTintColor: c.accent,
+          tabBarInactiveTintColor: c.text3,
+        }}
+      />
+      <Tab.Screen
+        name="Push"
+        component={PushScreen}
+        options={{
+          tabBarIcon: ({ focused, color }) => <TabIcon emoji="🔥" label="Push" focused={focused} color={color} />,
+          tabBarActiveTintColor: '#f97316',
+          tabBarInactiveTintColor: c.text3,
+        }}
+      />
+      <Tab.Screen
+        name="Pull"
+        component={PullScreen}
+        options={{
+          tabBarIcon: ({ focused, color }) => <TabIcon emoji="💧" label="Pull" focused={focused} color={color} />,
+          tabBarActiveTintColor: '#3b82f6',
+          tabBarInactiveTintColor: c.text3,
+        }}
+      />
+      <Tab.Screen
+        name="Legs"
+        component={LegsScreen}
+        options={{
+          tabBarIcon: ({ focused, color }) => <TabIcon emoji="🦵" label="Legs" focused={focused} color={color} />,
+          tabBarActiveTintColor: '#a855f7',
+          tabBarInactiveTintColor: c.text3,
+        }}
+      />
+      <Tab.Screen
+        name="Saturday"
+        component={SaturdayScreen}
+        options={{
+          tabBarIcon: ({ focused, color }) => <TabIcon emoji="⭐" label="Sat" focused={focused} color={color} />,
+          tabBarActiveTintColor: '#eab308',
+          tabBarInactiveTintColor: c.text3,
+        }}
+      />
+      <Tab.Screen
+        name="History"
+        component={HistoryScreen}
+        options={{
+          tabBarIcon: ({ focused, color }) => <TabIcon emoji="📊" label="History" focused={focused} color={color} />,
+          tabBarActiveTintColor: c.accent,
+          tabBarInactiveTintColor: c.text3,
+        }}
+      />
     </Tab.Navigator>
   );
 }
 
 export default function AppNavigator() {
-  const { user, isLoading } = useAuth();
-
-  if (isLoading) {
-    return (
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: COLORS.bg }}>
-        <ActivityIndicator size="large" color={COLORS.primary} />
-      </View>
-    );
-  }
+  const { colors } = useTheme();
+  const c = colors;
 
   return (
-    <NavigationContainer>
-      {user ? (
-        <Stack.Navigator>
-          <Stack.Screen
-            name="Main"
-            component={MainTabs}
-            options={{ headerShown: false }}
-          />
-          <Stack.Screen
-            name="WorkoutDetail"
-            component={WorkoutDetailScreen}
-            options={{
-              title: 'Workout Details',
-              headerStyle: { backgroundColor: COLORS.surface },
-              headerTitleStyle: { fontWeight: '700', color: COLORS.text },
-              headerShadowVisible: false,
-              headerTintColor: COLORS.primary,
-            }}
-          />
-        </Stack.Navigator>
-      ) : (
-        <AuthStack.Navigator screenOptions={{ headerShown: false }}>
-          <AuthStack.Screen name="Login" component={LoginScreen} />
-          <AuthStack.Screen name="Register" component={RegisterScreen} />
-        </AuthStack.Navigator>
-      )}
-    </NavigationContainer>
+    <Stack.Navigator screenOptions={{ headerShown: false, contentStyle: { backgroundColor: c.bg } }}>
+      <Stack.Screen name="Main" component={MainTabs} />
+    </Stack.Navigator>
   );
 }

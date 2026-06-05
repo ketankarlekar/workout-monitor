@@ -1,254 +1,139 @@
-import React, { useState, useCallback } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-} from 'react-native';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
-import { Ionicons } from '@expo/vector-icons';
-import { COLORS, RADIUS, SHADOW } from '../theme';
-import { loadWorkouts } from '../storage';
-import { useAuth } from '../context/AuthContext';
-import { Workout, TabParamList } from '../types';
-import { formatDate, formatDuration } from '../utils';
+import React from 'react';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { useTheme } from '../context/ThemeContext';
+import { useWorkout } from '../context/WorkoutContext';
+import { ContributionCalendar } from '../components/ContributionCalendar';
+import { R } from '../constants/theme';
 
-type NavProp = BottomTabNavigationProp<TabParamList, 'Home'>;
+const WORKOUT_CARDS = [
+  { type: 'push' as const, emoji: '🔥', name: 'Push', sub: 'Chest · Shoulders · Triceps', badge: '⚡ 3 muscles', bg: ['#1a0f08','#2a1505'], borderColor: 'rgba(249,115,22,0.25)', badgeBg: 'rgba(249,115,22,0.2)', badgeColor: '#fb923c' },
+  { type: 'pull' as const, emoji: '🏋️', name: 'Pull', sub: 'Back · Biceps · Forearms', badge: '💧 4 muscles', bg: ['#080f1a','#051525'], borderColor: 'rgba(59,130,246,0.25)', badgeBg: 'rgba(59,130,246,0.2)', badgeColor: '#60a5fa' },
+  { type: 'legs' as const, emoji: '🦵', name: 'Legs', sub: 'Quads · Hams · Glutes', badge: '🔮 5 muscles', bg: ['#120a1a','#180a24'], borderColor: 'rgba(168,85,247,0.25)', badgeBg: 'rgba(168,85,247,0.2)', badgeColor: '#c084fc' },
+  { type: 'saturday' as const, emoji: '⭐', name: 'Saturday', sub: 'Mixed · Full Body', badge: '🌟 Any muscle', bg: ['#1a1608','#201a05'], borderColor: 'rgba(234,179,8,0.25)', badgeBg: 'rgba(234,179,8,0.2)', badgeColor: '#fbbf24' },
+];
 
 export default function HomeScreen() {
-  const navigation = useNavigation<NavProp>();
-  const { signOut } = useAuth();
-  const [workouts, setWorkouts] = useState<Workout[]>([]);
+  const { colors, isDark, toggleTheme } = useTheme();
+  const { state } = useWorkout();
+  const navigation = useNavigation<any>();
+  const c = colors;
+  const s = state.stats;
 
-  useFocusEffect(
-    useCallback(() => {
-      loadWorkouts().then(setWorkouts);
-    }, [])
-  );
-
-  const last = workouts[0];
-  const totalSets = workouts.reduce(
-    (acc, w) => acc + w.exercises.reduce((a, e) => a + e.sets.length, 0),
-    0
-  );
+  const lastWorkoutText = s.lastWorkout
+    ? `${s.lastWorkout.type.charAt(0).toUpperCase() + s.lastWorkout.type.slice(1)} 💪`
+    : 'None yet';
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <View style={styles.header}>
-        <View>
-          <Text style={styles.greeting}>Workout Monitor</Text>
-          <Text style={styles.date}>
-            {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
-          </Text>
+    <View style={[styles.container, { backgroundColor: c.bg }]}>
+      {/* Top bar */}
+      <View style={[styles.topbar, { backgroundColor: c.surface, borderBottomColor: c.border }]}>
+        <View style={styles.topbarLogo}>
+          <View style={[styles.topbarIcon, { backgroundColor: c.accentDim }]}>
+            <Text style={{ fontSize: 18 }}>💪</Text>
+          </View>
+          <Text style={[styles.topbarTitle, { color: c.text }]}>Workout <Text style={{ color: c.accent }}>Monitor</Text></Text>
         </View>
-        <TouchableOpacity style={styles.logoutBtn} onPress={signOut} activeOpacity={0.7}>
-          <Ionicons name="log-out-outline" size={20} color={COLORS.textSecondary} />
+        <TouchableOpacity style={[styles.iconBtn, { backgroundColor: c.surface2, borderColor: c.border }]} onPress={toggleTheme}>
+          <Text style={{ fontSize: 16 }}>{isDark ? '🌙' : '☀️'}</Text>
         </TouchableOpacity>
       </View>
 
-      <View style={styles.statsRow}>
-        <View style={[styles.statCard, SHADOW.sm]}>
-          <Ionicons name="barbell-outline" size={22} color={COLORS.primary} />
-          <Text style={styles.statValue}>{workouts.length}</Text>
-          <Text style={styles.statLabel}>Workouts</Text>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
+        {/* Workout cards */}
+        <View style={styles.sectionHeader}>
+          <Text style={[styles.sectionTitle, { color: c.text3 }]}>WORKOUT TYPES</Text>
         </View>
-        <View style={[styles.statCard, SHADOW.sm]}>
-          <Ionicons name="checkmark-circle-outline" size={22} color={COLORS.success} />
-          <Text style={styles.statValue}>{totalSets}</Text>
-          <Text style={styles.statLabel}>Total Sets</Text>
+        <View style={styles.grid}>
+          {WORKOUT_CARDS.map(card => (
+            <TouchableOpacity
+              key={card.type}
+              style={[styles.workoutCard, { borderColor: card.borderColor, backgroundColor: isDark ? card.bg[0] : c.surface2 }]}
+              onPress={() => card.type === 'saturday' ? navigation.navigate('Saturday') : navigation.navigate(card.type.charAt(0).toUpperCase() + card.type.slice(1))}
+              activeOpacity={0.8}
+            >
+              <View>
+                <Text style={{ fontSize: 30, marginBottom: 8 }}>{card.emoji}</Text>
+                <Text style={[styles.cardName, { color: c.text }]}>{card.name}</Text>
+                <Text style={[styles.cardSub, { color: c.text2 }]}>{card.sub}</Text>
+              </View>
+              <View style={[styles.cardBadge, { backgroundColor: card.badgeBg }]}>
+                <Text style={[styles.cardBadgeText, { color: card.badgeColor }]}>{card.badge}</Text>
+              </View>
+            </TouchableOpacity>
+          ))}
         </View>
-        <View style={[styles.statCard, SHADOW.sm]}>
-          <Ionicons name="body-outline" size={22} color={COLORS.accent} />
-          <Text style={styles.statValue}>
-            {new Set(workouts.flatMap((w) => w.exercises.map((e) => e.exercise.muscleGroup))).size}
-          </Text>
-          <Text style={styles.statLabel}>Muscles Hit</Text>
-        </View>
-      </View>
 
-      {last ? (
-        <View style={[styles.lastCard, SHADOW.md]}>
-          <Text style={styles.sectionLabel}>Last Workout</Text>
-          <Text style={styles.lastDate}>{formatDate(last.date)}</Text>
-          <View style={styles.lastMeta}>
-            <View style={styles.metaItem}>
-              <Ionicons name="time-outline" size={15} color={COLORS.textSecondary} />
-              <Text style={styles.metaText}>{formatDuration(last.durationSeconds)}</Text>
-            </View>
-            <View style={styles.metaItem}>
-              <Ionicons name="list-outline" size={15} color={COLORS.textSecondary} />
-              <Text style={styles.metaText}>{last.exercises.length} exercises</Text>
-            </View>
-          </View>
-          <View style={styles.exerciseList}>
-            {last.exercises.slice(0, 4).map((ex) => (
-              <Text key={ex.exercise.id} style={styles.exerciseLine}>
-                · {ex.exercise.name}{' '}
-                <Text style={styles.setsCount}>({ex.sets.length} sets)</Text>
-              </Text>
-            ))}
-            {last.exercises.length > 4 && (
-              <Text style={styles.more}>+{last.exercises.length - 4} more</Text>
-            )}
-          </View>
+        {/* Contribution calendar */}
+        <View style={styles.sectionHeader}>
+          <Text style={[styles.sectionTitle, { color: c.text3 }]}>YEAR PROGRESS</Text>
         </View>
-      ) : (
-        <View style={[styles.emptyCard, SHADOW.sm]}>
-          <Ionicons name="fitness-outline" size={48} color={COLORS.disabled} />
-          <Text style={styles.emptyTitle}>No workouts yet</Text>
-          <Text style={styles.emptySubtitle}>Log your first session to get started</Text>
+        <View style={styles.padH}>
+          <ContributionCalendar sessions={state.sessions} />
         </View>
-      )}
 
-      <TouchableOpacity
-        style={styles.startBtn}
-        onPress={() => navigation.navigate('Log')}
-        activeOpacity={0.85}
-      >
-        <Ionicons name="play" size={20} color={COLORS.surface} />
-        <Text style={styles.startBtnText}>Start Workout</Text>
-      </TouchableOpacity>
-    </ScrollView>
+        {/* Stats */}
+        <View style={styles.sectionHeader}>
+          <Text style={[styles.sectionTitle, { color: c.text3 }]}>STATS</Text>
+        </View>
+        <View style={styles.statsGrid}>
+          <StatCard emoji="🏆" value={String(s.total)} label="Total Workouts" valueColor={c.accent} c={c} />
+          <StatCard emoji="🔥" value={String(s.streak)} label="Current Streak" valueColor="#f97316" c={c} />
+          <StatCard emoji="⚡" value={String(s.longestStreak)} label="Longest Streak" valueColor="#eab308" c={c} />
+          <StatCard emoji="📅" value={String(s.thisWeek)} label="This Week" valueColor={c.accent} c={c} />
+          <View style={[styles.statCard, styles.statCardFull, { backgroundColor: c.surface, borderColor: c.border }]}>
+            <View>
+              <Text style={[styles.statLabel, { color: c.text2 }]}>Last Workout</Text>
+              <Text style={[styles.statValue, { color: c.text, fontSize: 18 }]}>{lastWorkoutText}</Text>
+            </View>
+            <Text style={{ fontSize: 28 }}>✅</Text>
+          </View>
+        </View>
+        <View style={{ height: 24 }} />
+      </ScrollView>
+    </View>
+  );
+}
+
+function StatCard({ emoji, value, label, valueColor, c }: { emoji: string; value: string; label: string; valueColor: string; c: any }) {
+  return (
+    <View style={[styles.statCard, { backgroundColor: c.surface, borderColor: c.border }]}>
+      <Text style={{ fontSize: 22 }}>{emoji}</Text>
+      <Text style={[styles.statValue, { color: valueColor }]}>{value}</Text>
+      <Text style={[styles.statLabel, { color: c.text2 }]}>{label}</Text>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.bg,
+  container: { flex: 1 },
+  topbar: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingHorizontal: 20, paddingVertical: 14, borderBottomWidth: 1,
   },
-  content: {
-    padding: 20,
-    gap: 16,
+  topbarLogo: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  topbarIcon: { width: 34, height: 34, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  topbarTitle: { fontSize: 17, fontWeight: '700', letterSpacing: -0.3 },
+  iconBtn: { width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center', borderWidth: 1 },
+  scroll: { paddingBottom: 16 },
+  sectionHeader: { paddingHorizontal: 20, paddingTop: 20, paddingBottom: 12 },
+  sectionTitle: { fontSize: 13, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.8 },
+  padH: { paddingHorizontal: 20 },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, paddingHorizontal: 20 },
+  workoutCard: {
+    width: '47%', borderRadius: R.lg, padding: 18, borderWidth: 1,
+    minHeight: 130, justifyContent: 'space-between',
   },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 4,
-  },
-  logoutBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: COLORS.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 2,
-  },
-  greeting: {
-    fontSize: 26,
-    fontWeight: '800',
-    color: COLORS.text,
-  },
-  date: {
-    fontSize: 14,
-    color: COLORS.textSecondary,
-  },
-  statsRow: {
-    flexDirection: 'row',
-    gap: 12,
-  },
+  cardName: { fontSize: 16, fontWeight: '700', marginBottom: 2 },
+  cardSub: { fontSize: 12 },
+  cardBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 99, alignSelf: 'flex-start', marginTop: 8 },
+  cardBadgeText: { fontSize: 11, fontWeight: '600' },
+  statsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, paddingHorizontal: 20 },
   statCard: {
-    flex: 1,
-    backgroundColor: COLORS.surface,
-    borderRadius: RADIUS.md,
-    padding: 14,
-    alignItems: 'center',
-    gap: 6,
+    width: '47%', borderRadius: R.md, borderWidth: 1,
+    padding: 16, gap: 6,
   },
-  statValue: {
-    fontSize: 22,
-    fontWeight: '800',
-    color: COLORS.text,
-  },
-  statLabel: {
-    fontSize: 11,
-    color: COLORS.textSecondary,
-    textAlign: 'center',
-  },
-  lastCard: {
-    backgroundColor: COLORS.surface,
-    borderRadius: RADIUS.lg,
-    padding: 18,
-    gap: 10,
-  },
-  sectionLabel: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: COLORS.primary,
-    textTransform: 'uppercase',
-    letterSpacing: 0.8,
-  },
-  lastDate: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: COLORS.text,
-  },
-  lastMeta: {
-    flexDirection: 'row',
-    gap: 16,
-  },
-  metaItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  metaText: {
-    fontSize: 13,
-    color: COLORS.textSecondary,
-  },
-  exerciseList: {
-    gap: 4,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.border,
-    paddingTop: 10,
-  },
-  exerciseLine: {
-    fontSize: 14,
-    color: COLORS.text,
-  },
-  setsCount: {
-    color: COLORS.textSecondary,
-    fontSize: 13,
-  },
-  more: {
-    fontSize: 13,
-    color: COLORS.textSecondary,
-    fontStyle: 'italic',
-  },
-  emptyCard: {
-    backgroundColor: COLORS.surface,
-    borderRadius: RADIUS.lg,
-    padding: 32,
-    alignItems: 'center',
-    gap: 10,
-  },
-  emptyTitle: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: COLORS.text,
-  },
-  emptySubtitle: {
-    fontSize: 14,
-    color: COLORS.textSecondary,
-    textAlign: 'center',
-  },
-  startBtn: {
-    backgroundColor: COLORS.primary,
-    borderRadius: RADIUS.lg,
-    height: 52,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    marginTop: 4,
-  },
-  startBtnText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: COLORS.surface,
-  },
+  statCardFull: { width: '100%', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  statValue: { fontSize: 26, fontWeight: '800', letterSpacing: -1 },
+  statLabel: { fontSize: 12, fontWeight: '500' },
 });
