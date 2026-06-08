@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../context/ThemeContext';
+import { useAuth } from '../context/AuthContext';
 import { useWorkout } from '../context/WorkoutContext';
 import { ContributionCalendar } from '../components/ContributionCalendar';
 import { R } from '../constants/theme';
@@ -15,6 +16,7 @@ const WORKOUT_CARDS = [
 
 export default function HomeScreen() {
   const { colors, isDark, toggleTheme } = useTheme();
+  const { signOut } = useAuth();
   const { state } = useWorkout();
   const navigation = useNavigation<any>();
   const c = colors;
@@ -34,9 +36,14 @@ export default function HomeScreen() {
           </View>
           <Text style={[styles.topbarTitle, { color: c.text }]}>Workout <Text style={{ color: c.accent }}>Monitor</Text></Text>
         </View>
-        <TouchableOpacity style={[styles.iconBtn, { backgroundColor: c.surface2, borderColor: c.border }]} onPress={toggleTheme}>
-          <Text style={{ fontSize: 16 }}>{isDark ? '🌙' : '☀️'}</Text>
-        </TouchableOpacity>
+        <View style={{ flexDirection: 'row', gap: 8 }}>
+          <TouchableOpacity style={[styles.iconBtn, { backgroundColor: c.surface2, borderColor: c.border }]} onPress={toggleTheme}>
+            <Text style={{ fontSize: 16 }}>{isDark ? '🌙' : '☀️'}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={[styles.iconBtn, { backgroundColor: c.surface2, borderColor: c.border }]} onPress={signOut}>
+            <Text style={{ fontSize: 16 }}>🚪</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
