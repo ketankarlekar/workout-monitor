@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Modal, View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, KeyboardAvoidingView, Platform
 } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
 import { R } from '../constants/theme';
 import { Exercise } from '../types';
+import { EXERCISE_SUGGESTIONS } from '../constants/workoutData';
 
 const MUSCLE_GROUPS = [
   'Chest','Shoulders','Triceps','Back','Rear Delts','Biceps','Forearms',
@@ -31,6 +32,12 @@ export function AddExerciseModal({ visible, initialMuscleGroup, onClose, onAdd }
   const [sets, setSets] = useState('3');
   const [reps, setReps] = useState('10');
   const [weight, setWeight] = useState('');
+
+  const suggestions = useMemo(() => {
+    const all = EXERCISE_SUGGESTIONS[mg] ?? [];
+    const q = name.trim().toLowerCase();
+    return q ? all.filter(s => s.toLowerCase().includes(q)) : all;
+  }, [mg, name]);
 
   useEffect(() => {
     if (visible && initialMuscleGroup) setMg(initialMuscleGroup);
@@ -81,11 +88,29 @@ export function AddExerciseModal({ visible, initialMuscleGroup, onClose, onAdd }
               <Text style={[styles.fieldLabel, { color: c.text2 }]}>EXERCISE NAME</Text>
               <TextInput
                 style={[styles.input, { backgroundColor: c.surface2, borderColor: c.border, color: c.text }]}
-                placeholder="e.g. Incline Bench Press"
+                placeholder="Type or pick below…"
                 placeholderTextColor={c.text3}
                 value={name}
                 onChangeText={setName}
               />
+              {suggestions.length > 0 && (
+                <>
+                  <Text style={[styles.fieldLabel, { color: c.text2, marginBottom: 8 }]}>SUGGESTIONS</Text>
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 14 }}>
+                    <View style={{ flexDirection: 'row', gap: 8 }}>
+                      {suggestions.map(s => (
+                        <TouchableOpacity
+                          key={s}
+                          style={[styles.chip, { backgroundColor: name === s ? c.accent : c.surface2, borderColor: name === s ? c.accent : c.border }]}
+                          onPress={() => setName(s)}
+                        >
+                          <Text style={{ fontSize: 12, fontWeight: '600', color: name === s ? '#000' : c.text }}>{s}</Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  </ScrollView>
+                </>
+              )}
 
               <View style={{ flexDirection: 'row', gap: 10 }}>
                 <View style={{ flex: 1 }}>

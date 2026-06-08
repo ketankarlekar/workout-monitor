@@ -7,6 +7,8 @@ interface State {
   activeWorkouts: Record<WorkoutType, MuscleGroup[]>;
   sessions: WorkoutSession[];
   stats: Stats;
+  /** Free-form notes/history the user attaches to a calendar day, keyed by 'YYYY-MM-DD'. */
+  dayNotes: Record<string, string>;
 }
 
 type Action =
@@ -17,7 +19,9 @@ type Action =
   | { type: 'DELETE_EX'; wType: WorkoutType; mgId: string; exId: string }
   | { type: 'UPDATE_NOTES'; wType: WorkoutType; mgId: string; exId: string; notes: string }
   | { type: 'SAVE_SESSION'; wType: WorkoutType }
-  | { type: 'LOAD_SESSIONS'; sessions: WorkoutSession[] };
+  | { type: 'LOAD_SESSIONS'; sessions: WorkoutSession[] }
+  | { type: 'SET_DAY_NOTE'; date: string; notes: string }
+  | { type: 'LOAD_DAY_NOTES'; dayNotes: Record<string, string> };
 
 function localDateStr(d = new Date()): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -175,12 +179,22 @@ function reducer(state: State, action: Action): State {
         stats: computeStats(action.sessions),
       };
     }
+    case 'SET_DAY_NOTE': {
+      return {
+        ...state,
+        dayNotes: { ...state.dayNotes, [action.date]: action.notes },
+      };
+    }
+    case 'LOAD_DAY_NOTES': {
+      return { ...state, dayNotes: action.dayNotes };
+    }
     default:
       return state;
   }
 }
 
 const SESSIONS_KEY = 'workout_sessions';
+const DAY_NOTES_KEY = 'workout_day_notes';
 
 const initialState: State = {
   activeWorkouts: {
@@ -191,6 +205,7 @@ const initialState: State = {
   },
   sessions: [],
   stats: { total: 0, streak: 0, longestStreak: 0, thisWeek: 0 },
+  dayNotes: {},
 };
 
 interface WorkoutContextType {
@@ -202,6 +217,7 @@ interface WorkoutContextType {
   deleteEx: (wType: WorkoutType, mgId: string, exId: string) => void;
   updateNotes: (wType: WorkoutType, mgId: string, exId: string, notes: string) => void;
   saveSession: (wType: WorkoutType) => void;
+  setDayNote: (date: string, notes: string) => void;
 }
 
 const WorkoutContext = createContext<WorkoutContextType>({} as WorkoutContextType);
@@ -209,6 +225,7 @@ const WorkoutContext = createContext<WorkoutContextType>({} as WorkoutContextTyp
 export function WorkoutProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(reducer, initialState);
   const loaded = useRef(false);
+  const notesLoaded = useRef(false);
 
   useEffect(() => {
     AsyncStorage.getItem(SESSIONS_KEY).then(raw => {
@@ -217,6 +234,12 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
       }
       loaded.current = true;
     });
+    AsyncStorage.getItem(DAY_NOTES_KEY).then(raw => {
+      if (raw) {
+        try { dispatch({ type: 'LOAD_DAY_NOTES', dayNotes: JSON.parse(raw) }); } catch {}
+      }
+      notesLoaded.current = true;
+    });
   }, []);
 
   useEffect(() => {
@@ -224,6 +247,13 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
       AsyncStorage.setItem(SESSIONS_KEY, JSON.stringify(state.sessions));
     }
   }, [state.sessions]);
+
+  useEffect(() => {
+    // Guard against overwriting saved notes with the empty initial state before the load above resolves.
+    if (notesLoaded.current) {
+      AsyncStorage.setItem(DAY_NOTES_KEY, JSON.stringify(state.dayNotes));
+    }
+  }, [state.dayNotes]);
 
   return (
     <WorkoutContext.Provider value={{
@@ -235,6 +265,7 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
       deleteEx: (wType, mgId, exId) => dispatch({ type: 'DELETE_EX', wType, mgId, exId }),
       updateNotes: (wType, mgId, exId, notes) => dispatch({ type: 'UPDATE_NOTES', wType, mgId, exId, notes }),
       saveSession: (wType) => dispatch({ type: 'SAVE_SESSION', wType }),
+      setDayNote: (date, notes) => dispatch({ type: 'SET_DAY_NOTE', date, notes }),
     }}>
       {children}
     </WorkoutContext.Provider>

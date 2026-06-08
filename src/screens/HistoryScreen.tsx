@@ -2,8 +2,14 @@ import React, { useState, useMemo } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, TextInput, StyleSheet } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
 import { useWorkout } from '../context/WorkoutContext';
+import { DayDetailModal } from '../components/DayDetailModal';
 import { R } from '../constants/theme';
 import { WorkoutType } from '../types';
+
+/** Build the same 'YYYY-MM-DD' key used for WorkoutSession.date / dayNotes. */
+function dateKey(year: number, month: number, day: number): string {
+  return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+}
 
 const TYPE_COLORS: Record<WorkoutType, { bg: string; text: string; label: string }> = {
   push:     { bg: 'rgba(249,115,22,0.2)',  text: '#fb923c', label: 'PUSH' },
@@ -18,12 +24,20 @@ const SHORT_MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct
 
 export default function HistoryScreen() {
   const { colors } = useTheme();
-  const { state } = useWorkout();
+  const { state, setDayNote } = useWorkout();
   const c = colors;
 
   const [filter, setFilter] = useState<WorkoutType | 'all'>('all');
   const [search, setSearch] = useState('');
   const [calDate, setCalDate] = useState(new Date());
+
+  // Currently-open "day detail" sheet (opened by tapping a green workout dot).
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const selectedSessions = useMemo(
+    () => (selectedDate ? state.sessions.filter(s => s.date === selectedDate) : []),
+    [state.sessions, selectedDate]
+  );
+  const selectedNotes = selectedDate ? (state.dayNotes[selectedDate] ?? '') : '';
 
   const filteredSessions = useMemo(() => {
     return state.sessions.filter(s => {
@@ -123,10 +137,16 @@ export default function HistoryScreen() {
               const isToday = day === today.getDate() && month === today.getMonth() && year === today.getFullYear();
               const hasWorkout = workoutDaysThisMonth.has(day);
               return (
-                <View key={day} style={[styles.calDay, isToday && [styles.calDayToday, { backgroundColor: c.accent }]]}>
+                <TouchableOpacity
+                  key={day}
+                  disabled={!hasWorkout}
+                  activeOpacity={hasWorkout ? 0.6 : 1}
+                  onPress={() => setSelectedDate(dateKey(year, month, day))}
+                  style={[styles.calDay, isToday && [styles.calDayToday, { backgroundColor: c.accent }]]}
+                >
                   <Text style={[styles.calDayTxt, { color: isToday ? '#000' : c.text }, isToday && { fontWeight: '800' }]}>{day}</Text>
                   {hasWorkout && !isToday && <View style={[styles.calDot, { backgroundColor: c.accent }]} />}
-                </View>
+                </TouchableOpacity>
               );
             })}
           </View>
@@ -193,6 +213,17 @@ export default function HistoryScreen() {
         </View>
         <View style={{ height: 24 }} />
       </ScrollView>
+
+      {/* Tapping a green "workout logged" dot opens this sheet: shows that day's
+          plan (exercises/sets/reps) plus an editable, persisted notes/history field. */}
+      <DayDetailModal
+        visible={!!selectedDate}
+        date={selectedDate}
+        sessions={selectedSessions}
+        initialNotes={selectedNotes}
+        onClose={() => setSelectedDate(null)}
+        onSave={notes => { if (selectedDate) setDayNote(selectedDate, notes); }}
+      />
     </View>
   );
 }
