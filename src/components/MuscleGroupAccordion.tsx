@@ -4,6 +4,7 @@ import { useTheme } from '../context/ThemeContext';
 import { MuscleGroup, WorkoutType, Exercise } from '../types';
 import { ExerciseCard } from './ExerciseCard';
 import { useWorkout } from '../context/WorkoutContext';
+import { MgIcon } from './MgIcon';
 
 interface Props {
   mg: MuscleGroup;
@@ -23,7 +24,7 @@ export function MuscleGroupAccordion({ mg, wType, accentColor, onAddExercise, on
     <View style={[styles.group, { borderBottomColor: c.border }]}>
       <TouchableOpacity style={[styles.toggle, { borderBottomColor: c.border }]} onPress={() => toggleMG(wType, mg.id)} activeOpacity={0.7}>
         <View style={[styles.icon, { backgroundColor: mg.color }]}>
-          <Text style={{ fontSize: 20 }}>{mg.emoji}</Text>
+          <MgIcon name={mg.name} size={22} />
         </View>
         <Text style={[styles.label, { color: c.text }]}>{mg.name}</Text>
         <Text style={[styles.count, { color: c.text3 }]}>{mg.exercises.length} exercises</Text>

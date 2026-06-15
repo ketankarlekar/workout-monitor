@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Modal, View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, KeyboardAvoidingView, Platform,
+  Modal, View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, KeyboardAvoidingView, Platform, useWindowDimensions,
 } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
 import { R } from '../constants/theme';
 import { WorkoutSession, WorkoutType } from '../types';
+import { MgIcon } from './MgIcon';
 
 const TYPE_INFO: Record<WorkoutType, { label: string; emoji: string; color: string }> = {
   push:     { label: 'Push Day',     emoji: '🔥', color: '#fb923c' },
@@ -17,7 +18,7 @@ interface Props {
   visible: boolean;
   /** Selected calendar day in 'YYYY-MM-DD' form, or null when nothing is selected. */
   date: string | null;
-  /** All logged workout sessions that fall on `date` — i.e. the "workout plan" for that day. */
+  /** Sessions logged on `date`, reduced to only the exercises the user actually completed. */
   sessions: WorkoutSession[];
   /** Previously saved notes/history text for this day, if any. */
   initialNotes: string;
@@ -26,7 +27,7 @@ interface Props {
 }
 
 /**
- * Bottom-sheet shown when the user taps a green "has workout" dot on the calendar.
+ * Centered dialog shown when the user taps a green "has workout" dot on the calendar.
  * Displays the exercises/sets/reps logged that day and lets the user attach their
  * own free-text history notes, which are persisted (via WorkoutContext -> AsyncStorage)
  * and shown again the next time the same day is opened.
@@ -34,6 +35,7 @@ interface Props {
 export function DayDetailModal({ visible, date, sessions, initialNotes, onClose, onSave }: Props) {
   const { colors } = useTheme();
   const c = colors;
+  const { height: windowHeight } = useWindowDimensions();
   const [notes, setNotes] = useState(initialNotes);
 
   // Re-seed the draft whenever a new day is opened (or its saved notes change underneath us).
@@ -49,18 +51,16 @@ export function DayDetailModal({ visible, date, sessions, initialNotes, onClose,
   };
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <TouchableOpacity style={styles.backdrop} activeOpacity={1} onPress={onClose}>
-        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ width: '100%' }}>
-          <TouchableOpacity activeOpacity={1}>
-            <View style={[styles.sheet, { backgroundColor: c.surface }]}>
-              <View style={[styles.handle, { backgroundColor: c.border2 }]} />
-
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.sheetWrapper}>
+          <TouchableOpacity activeOpacity={1} style={{ width: '100%' }}>
+            <View style={[styles.sheet, { backgroundColor: c.surface, maxHeight: windowHeight - 48 }]}>
               <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
                 <Text style={[styles.title, { color: c.text }]}>📅 {dateLabel}</Text>
 
-                {/* ---- 1. The workout plan logged for this day ---- */}
-                <Text style={[styles.label, { color: c.text2 }]}>WORKOUT PLAN</Text>
+                {/* ---- 1. The workout actually completed this day ---- */}
+                <Text style={[styles.label, { color: c.text2 }]}>WORKOUT COMPLETED</Text>
                 {sessions.length === 0 ? (
                   <Text style={[styles.emptyTxt, { color: c.text3 }]}>No workout logged for this day.</Text>
                 ) : (
@@ -75,7 +75,10 @@ export function DayDetailModal({ visible, date, sessions, initialNotes, onClose,
                         </View>
                         {groups.map(mg => (
                           <View key={mg.id} style={styles.mgBlock}>
-                            <Text style={[styles.mgName, { color: c.text }]}>{mg.emoji} {mg.name}</Text>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                              <MgIcon name={mg.name} size={18} />
+                              <Text style={[styles.mgName, { color: c.text }]}>{mg.name}</Text>
+                            </View>
                             {mg.exercises.map(e => (
                               <View key={e.id} style={styles.exRow}>
                                 <Text style={[styles.exName, { color: c.text2 }]} numberOfLines={1}>{e.emoji} {e.name}</Text>
@@ -122,9 +125,9 @@ export function DayDetailModal({ visible, date, sessions, initialNotes, onClose,
 }
 
 const styles = StyleSheet.create({
-  backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' },
-  sheet: { borderTopLeftRadius: R.xl, borderTopRightRadius: R.xl, padding: 24, paddingBottom: 32, maxHeight: '85%' },
-  handle: { width: 36, height: 4, borderRadius: 2, alignSelf: 'center', marginBottom: 16 },
+  backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', alignItems: 'center', padding: 24 },
+  sheetWrapper: { width: '100%', maxWidth: 600 },
+  sheet: { width: '100%', borderRadius: R.xl, padding: 24, paddingBottom: 32 },
   title: { fontSize: 18, fontWeight: '800', marginBottom: 16 },
   label: { fontSize: 11, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 },
   emptyTxt: { fontSize: 13, marginBottom: 4 },

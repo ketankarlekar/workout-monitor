@@ -53,6 +53,12 @@ class LargeSecureStore {
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY!;
 
+// True once a real Supabase project has been wired up via env vars. While false, auth and
+// sync fall back to local-only/dev-mode behavior instead of calling the placeholder URL.
+export const isSupabaseConfigured =
+  Boolean(process.env.EXPO_PUBLIC_SUPABASE_URL) &&
+  !process.env.EXPO_PUBLIC_SUPABASE_URL!.includes('YOUR_PROJECT_REF');
+
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     storage: new LargeSecureStore(),

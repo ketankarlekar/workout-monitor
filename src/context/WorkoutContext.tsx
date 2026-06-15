@@ -2,7 +2,7 @@ import React, { createContext, useContext, useReducer, useEffect, useRef } from 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { WorkoutType, MuscleGroup, WorkoutSession, Stats, Exercise } from '../types';
 import { cloneWorkout } from '../constants/workoutData';
-import { supabase } from '../lib/supabase';
+import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { useAuth } from './AuthContext';
 
 interface State {
@@ -287,6 +287,10 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
       dispatch({ type: 'LOAD_SESSIONS', sessions: localSessions });
       dispatch({ type: 'LOAD_DAY_NOTES', dayNotes: localNotes, dayNotesUpdatedAt: localNotesUpdatedAt });
 
+      // Without a configured Supabase project (e.g. dev mode) there's nothing to sync
+      // against — stay local-only and skip the remote reconciliation below.
+      if (!isSupabaseConfigured) return;
+
       const userId = session.user.id;
       const [sessionsRes, notesRes] = await Promise.all([
         supabase.from('sessions').select('*').eq('user_id', userId),
@@ -363,7 +367,7 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
   // Push newly-saved sessions to Supabase as they happen. Fire-and-forget: if this fails
   // (e.g. offline), the launch-time reconciliation above will pick it up and retry later.
   useEffect(() => {
-    if (!synced.current || !session) return;
+    if (!isSupabaseConfigured || !synced.current || !session) return;
     const toPush = state.sessions.filter(s => !pushedSessionIds.current.has(s.id));
     if (!toPush.length) return;
     toPush.forEach(s => pushedSessionIds.current.add(s.id));
@@ -372,7 +376,7 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
 
   // Push edited day notes the same fire-and-forget + reconcile-on-launch way.
   useEffect(() => {
-    if (!synced.current || !session) return;
+    if (!isSupabaseConfigured || !synced.current || !session) return;
     const toPush = Object.entries(state.dayNotesUpdatedAt).filter(
       ([date, ts]) => pushedNoteTimestamps.current[date] !== ts
     );

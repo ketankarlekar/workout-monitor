@@ -37,3 +37,14 @@ export interface Stats {
   thisWeek: number;
   lastWorkout?: { date: string; type: WorkoutType };
 }
+
+/** A Sun–Sat week shown in the History "Weekly Breakdown" / Monthly Report. */
+export interface WeekInfo {
+  index: number;
+  /** 7 'YYYY-MM-DD' keys, Sunday first. */
+  dates: string[];
+  /** Completed sessions falling on any of `dates`. */
+  sessions: WorkoutSession[];
+  /** True if `dates` contains today. */
+  isCurrent: boolean;
+}

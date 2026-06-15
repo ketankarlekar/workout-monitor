@@ -1,6 +1,26 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import type { Session } from '@supabase/supabase-js';
-import { supabase } from '../lib/supabase';
+import { supabase, isSupabaseConfigured } from '../lib/supabase';
+
+const DEV_EMAIL = process.env.EXPO_PUBLIC_DEV_EMAIL ?? '';
+const DEV_PASSWORD = process.env.EXPO_PUBLIC_DEV_PASSWORD ?? '';
+
+// Minimal mock session used in dev mode — satisfies the Session shape for routing.
+const makeDevSession = (): Session =>
+  ({
+    access_token: 'dev-access-token',
+    refresh_token: 'dev-refresh-token',
+    expires_in: 3600,
+    token_type: 'bearer',
+    user: {
+      id: 'dev-user-00000000-0000-0000-0000-000000000000',
+      email: DEV_EMAIL,
+      app_metadata: {},
+      user_metadata: {},
+      aud: 'authenticated',
+      created_at: new Date().toISOString(),
+    },
+  } as Session);
 
 interface AuthContextType {
   session: Session | null;
@@ -23,6 +43,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!isSupabaseConfigured) {
+      setLoading(false);
+      return;
+    }
+
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session);
       setLoading(false);
@@ -36,16 +61,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signIn = async (email: string, password: string) => {
+    if (!isSupabaseConfigured) {
+      if (email === DEV_EMAIL && password === DEV_PASSWORD) {
+        setSession(makeDevSession());
+        return null;
+      }
+      return 'Invalid email or password (dev mode)';
+    }
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     return error?.message ?? null;
   };
 
   const signUp = async (email: string, password: string) => {
+    if (!isSupabaseConfigured) {
+      return 'Sign-up is disabled in dev mode. Use the test credentials to sign in.';
+    }
     const { error } = await supabase.auth.signUp({ email, password });
     return error?.message ?? null;
   };
 
   const signOut = async () => {
+    if (!isSupabaseConfigured) {
+      setSession(null);
+      return;
+    }
     await supabase.auth.signOut();
   };
 

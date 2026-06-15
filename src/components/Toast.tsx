@@ -17,7 +17,7 @@ export const Toast = forwardRef<ToastRef, object>((_, ref) => {
   useImperativeHandle(ref, () => ({
     show(message: string) {
       setMsg(message);
-      clearTimeout(timer.current);
+      if (timer.current) clearTimeout(timer.current);
       Animated.parallel([
         Animated.timing(opacity, { toValue: 1, duration: 180, useNativeDriver: true }),
         Animated.timing(translateY, { toValue: 0, duration: 180, useNativeDriver: true }),
