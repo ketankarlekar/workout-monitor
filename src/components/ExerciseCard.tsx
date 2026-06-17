@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
 import { R } from '../constants/theme';
@@ -17,6 +17,8 @@ export function ExerciseCard({ exercise, accentColor, onToggle, onUpdate, onNote
   const { colors } = useTheme();
   const c = colors;
 
+  const volume = exercise.weight ? exercise.sets * exercise.reps * exercise.weight : null;
+
   return (
     <View style={[
       styles.card,
@@ -28,11 +30,16 @@ export function ExerciseCard({ exercise, accentColor, onToggle, onUpdate, onNote
       </View>
       <View style={styles.info}>
         <Text style={[styles.name, { color: c.text }]}>{exercise.name}</Text>
-        <Text style={[styles.muscle, { color: c.text2 }]}>{exercise.muscleGroup}</Text>
+        <View style={styles.muscleRow}>
+          <Text style={[styles.muscle, { color: c.text2 }]}>{exercise.muscleGroup}</Text>
+          {volume !== null && (
+            <Text style={[styles.volume, { color: accentColor }]}>{volume.toLocaleString()} kg</Text>
+          )}
+        </View>
         <View style={styles.row}>
-          <InputField label="Sets" value={exercise.sets} colors={c} onChange={v => onUpdate('sets', v)} />
-          <InputField label="Reps" value={exercise.reps} colors={c} onChange={v => onUpdate('reps', v)} />
-          <InputField label="kg" value={exercise.weight ?? 0} colors={c} onChange={v => onUpdate('weight', v)} />
+          <InputField label="Sets" value={exercise.sets} min={1} colors={c} onChange={v => onUpdate('sets', v)} />
+          <InputField label="Reps" value={exercise.reps} min={1} colors={c} onChange={v => onUpdate('reps', v)} />
+          <InputField label="kg" value={exercise.weight ?? 0} min={0} colors={c} onChange={v => onUpdate('weight', v)} />
         </View>
       </View>
       <View style={styles.actions}>
@@ -55,16 +62,32 @@ export function ExerciseCard({ exercise, accentColor, onToggle, onUpdate, onNote
   );
 }
 
-function InputField({ label, value, colors, onChange }: { label: string; value: number; colors: any; onChange: (v: number) => void }) {
+function InputField({ label, value, min, colors, onChange }: {
+  label: string; value: number; min: number; colors: any; onChange: (v: number) => void;
+}) {
+  const [text, setText] = useState(String(value === 0 && label === 'kg' ? '' : value));
+
+  useEffect(() => {
+    setText(value === 0 && label === 'kg' ? '' : String(value));
+  }, [value, label]);
+
   return (
     <View style={styles.inputWrap}>
       <Text style={[styles.inputLabel, { color: colors.text3 }]}>{label}</Text>
       <TextInput
         style={[styles.input, { backgroundColor: colors.surface2, borderColor: colors.border, color: colors.text }]}
-        value={String(value)}
+        value={text}
         keyboardType="numeric"
-        onChangeText={t => onChange(parseFloat(t) || 0)}
+        onChangeText={setText}
+        onBlur={() => {
+          const n = parseFloat(text);
+          const val = isNaN(n) ? min : Math.max(min, n);
+          setText(val === 0 && label === 'kg' ? '' : String(val));
+          onChange(val);
+        }}
         selectTextOnFocus
+        placeholder={label === 'kg' ? '—' : undefined}
+        placeholderTextColor={colors.text3}
       />
     </View>
   );
@@ -82,7 +105,9 @@ const styles = StyleSheet.create({
   thumbEmoji: { fontSize: 24 },
   info: { flex: 1 },
   name: { fontSize: 14, fontWeight: '700', marginBottom: 2 },
-  muscle: { fontSize: 12, marginBottom: 8 },
+  muscleRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
+  muscle: { fontSize: 12 },
+  volume: { fontSize: 11, fontWeight: '700' },
   row: { flexDirection: 'row', gap: 8 },
   inputWrap: { alignItems: 'center', gap: 2 },
   inputLabel: { fontSize: 11, fontWeight: '600' },

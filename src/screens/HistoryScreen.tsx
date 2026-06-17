@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, TextInput, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, TextInput, StyleSheet, Share } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
 import { useWorkout } from '../context/WorkoutContext';
 import { DayDetailModal } from '../components/DayDetailModal';
@@ -112,13 +112,36 @@ export default function HistoryScreen() {
   const prevMonth = () => setCalDate(new Date(year, month - 1, 1));
   const nextMonth = () => setCalDate(new Date(year, month + 1, 1));
 
+  const handleExport = async () => {
+    const toExport = filteredSessions.length > 0 ? filteredSessions : sessionsWithCompletedWork;
+    if (toExport.length === 0) return;
+    const lines = toExport.map(s => {
+      const date = new Date(`${s.date}T00:00:00`).toLocaleDateString('en-US', {
+        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+      });
+      const header = `${TYPE_COLORS[s.type].emoji} ${TYPE_COLORS[s.type].full} — ${date}`;
+      const exLines = s.muscleGroups.flatMap(mg =>
+        mg.exercises.map(e =>
+          `  • ${e.name}  ${e.sets}×${e.reps}${e.weight ? ` @ ${e.weight}kg` : ''}`
+        )
+      );
+      return [header, ...exLines].join('\n');
+    });
+    await Share.share({
+      message: `Workout History\n${'─'.repeat(32)}\n\n${lines.join('\n\n')}`,
+      title: 'Workout History',
+    });
+  };
+
   return (
     <View style={[styles.container, { backgroundColor: c.bg }]}>
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View style={styles.sectionHeader}>
           <Text style={[styles.sectionTitle, { color: c.text3 }]}>WORKOUT HISTORY</Text>
-          <Text style={[styles.sectionLink, { color: c.accent }]}>Export</Text>
+          <TouchableOpacity onPress={handleExport}>
+            <Text style={[styles.sectionLink, { color: c.accent }]}>Export</Text>
+          </TouchableOpacity>
         </View>
 
         {/* Search */}

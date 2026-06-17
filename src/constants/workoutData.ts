@@ -193,26 +193,60 @@ export const DEFAULT_WORKOUTS: Record<WorkoutType, MuscleGroup[]> = {
     {
       id: uid(), name: 'Back', emoji: '🦴', color: 'rgba(59,130,246,0.15)', expanded: true,
       exercises: [
-        ex('Pull-ups', '🔝', 'Back', 4, 8, null),
+        // Pull-ups / bodyweight
+        ex('Pull-Up', '🔝', 'Back', 4, 8, null),
+        ex('Chin-Up', '🔝', 'Back', 3, 8, null),
+        // Rows
         ex('Barbell Row', '🔧', 'Back', 4, 6, 90),
+        ex('Dumbbell Row', '💪', 'Back', 3, 10, 40),
+        ex('T-Bar Row', '🔧', 'Back', 3, 8, 70),
+        ex('Pendlay Row', '🔧', 'Back', 3, 6, 80),
+        ex('Seated Cable Row', '🤸', 'Back', 3, 12, 60),
+        ex('Single-Arm Cable Row', '🤸', 'Back', 3, 12, 30),
+        // Pulldowns
+        ex('Lat Pulldown', '⬇️', 'Back', 4, 10, 70),
+        ex('Straight-Arm Pulldown', '⬇️', 'Back', 3, 15, 30),
+        // Deadlift variations
+        ex('Deadlift', '🏆', 'Back', 4, 5, 120),
+        ex('Rack Pull', '🏋️', 'Back', 3, 6, 140),
+        ex('Hyperextension', '🔄', 'Back', 3, 15, null),
       ],
     },
     {
       id: uid(), name: 'Rear Delts', emoji: '↩️', color: 'rgba(59,130,246,0.15)', expanded: false,
       exercises: [
         ex('Face Pulls', '🔄', 'Rear Delts', 3, 15, 20),
+        ex('Reverse Fly', '↩️', 'Rear Delts', 3, 15, 10),
+        ex('Dumbbell Reverse Fly', '💪', 'Rear Delts', 3, 15, 8),
+        ex('Cable Reverse Fly', '🤸', 'Rear Delts', 3, 15, 10),
+        ex('Band Pull-Apart', '🏅', 'Rear Delts', 3, 20, null),
+        ex('Prone Y Raise', '⬆️', 'Rear Delts', 3, 15, null),
       ],
     },
     {
       id: uid(), name: 'Biceps', emoji: '💪', color: 'rgba(59,130,246,0.15)', expanded: false,
       exercises: [
         ex('Barbell Curl', '🥊', 'Biceps', 4, 10, 40),
+        ex('EZ Bar Curl', '🥊', 'Biceps', 3, 10, 30),
+        ex('Dumbbell Curl', '💪', 'Biceps', 3, 12, 14),
+        ex('Hammer Curl', '🔨', 'Biceps', 3, 12, 14),
+        ex('Incline Dumbbell Curl', '💪', 'Biceps', 3, 12, 12),
+        ex('Preacher Curl', '🏋️', 'Biceps', 3, 10, 30),
+        ex('Concentration Curl', '🎯', 'Biceps', 3, 12, 12),
+        ex('Cable Curl', '🤸', 'Biceps', 3, 15, 20),
+        ex('Spider Curl', '🕷️', 'Biceps', 3, 12, 12),
+        ex('Zottman Curl', '🔄', 'Biceps', 3, 10, 10),
       ],
     },
     {
       id: uid(), name: 'Forearms', emoji: '🤜', color: 'rgba(59,130,246,0.15)', expanded: false,
       exercises: [
         ex('Wrist Curls', '✊', 'Forearms', 3, 20, 15),
+        ex('Reverse Wrist Curls', '✊', 'Forearms', 3, 20, 10),
+        ex('Reverse Curl', '🔄', 'Forearms', 3, 12, 20),
+        ex('Dead Hang', '🏅', 'Forearms', 3, 30, null),
+        ex('Farmers Walk', '🚶', 'Forearms', 3, 40, 30),
+        ex('Plate Pinch', '🤏', 'Forearms', 3, 30, 10),
       ],
     },
   ],
@@ -221,28 +255,59 @@ export const DEFAULT_WORKOUTS: Record<WorkoutType, MuscleGroup[]> = {
       id: uid(), name: 'Quads', emoji: '🏋️', color: 'rgba(168,85,247,0.15)', expanded: true,
       exercises: [
         ex('Squat', '🏆', 'Quads', 5, 5, 100),
+        ex('Front Squat', '🏆', 'Quads', 4, 6, 80),
+        ex('Hack Squat', '🤖', 'Quads', 4, 10, 120),
         ex('Leg Press', '🦵', 'Quads', 4, 10, 180),
+        ex('Leg Extension', '🤖', 'Quads', 3, 15, 60),
+        ex('Bulgarian Split Squat', '🏅', 'Quads', 3, 10, 20),
+        ex('Lunge', '🚶', 'Quads', 3, 12, 20),
+        ex('Walking Lunge', '🚶', 'Quads', 3, 20, 16),
+        ex('Box Squat', '🏋️', 'Quads', 4, 6, 90),
+        ex('Step-Up', '⬆️', 'Quads', 3, 12, 20),
+        ex('Smith Machine Squat', '🤖', 'Quads', 4, 10, 100),
       ],
     },
     {
       id: uid(), name: 'Hamstrings', emoji: '🔄', color: 'rgba(168,85,247,0.15)', expanded: false,
       exercises: [
         ex('Romanian Deadlift', '🔻', 'Hamstrings', 4, 8, 80),
+        ex('Stiff-Leg Deadlift', '🔻', 'Hamstrings', 3, 10, 70),
+        ex('Leg Curl (Lying)', '🔄', 'Hamstrings', 3, 12, 40),
+        ex('Leg Curl (Seated)', '🔄', 'Hamstrings', 3, 12, 40),
+        ex('Good Morning', '🙇', 'Hamstrings', 3, 10, 50),
+        ex('Nordic Hamstring Curl', '🏅', 'Hamstrings', 3, 6, null),
+        ex('Glute-Ham Raise', '🔄', 'Hamstrings', 3, 10, null),
       ],
     },
     {
       id: uid(), name: 'Glutes', emoji: '🍑', color: 'rgba(168,85,247,0.15)', expanded: false,
       exercises: [
         ex('Hip Thrust', '🔺', 'Glutes', 4, 12, 100),
+        ex('Barbell Glute Bridge', '🔺', 'Glutes', 3, 15, 80),
+        ex('Cable Kickback', '🤸', 'Glutes', 3, 15, 20),
+        ex('Donkey Kick', '🦶', 'Glutes', 3, 15, null),
+        ex('Sumo Squat', '🏆', 'Glutes', 3, 12, 60),
+        ex('Step-Up', '⬆️', 'Glutes', 3, 12, 20),
       ],
     },
     {
       id: uid(), name: 'Calves', emoji: '🦶', color: 'rgba(168,85,247,0.15)', expanded: false,
-      exercises: [],
+      exercises: [
+        ex('Standing Calf Raise', '⬆️', 'Calves', 4, 20, 60),
+        ex('Seated Calf Raise', '🤖', 'Calves', 3, 20, 50),
+        ex('Leg Press Calf Raise', '🦵', 'Calves', 3, 20, 100),
+        ex('Single-Leg Calf Raise', '⬆️', 'Calves', 3, 15, null),
+        ex('Donkey Calf Raise', '🍑', 'Calves', 3, 20, null),
+      ],
     },
     {
       id: uid(), name: 'Adductors', emoji: '🦵', color: 'rgba(168,85,247,0.15)', expanded: false,
-      exercises: [],
+      exercises: [
+        ex('Adductor Machine', '🤖', 'Adductors', 3, 15, 50),
+        ex('Copenhagen Plank', '🏅', 'Adductors', 3, 30, null),
+        ex('Side Lunge', '🚶', 'Adductors', 3, 12, null),
+        ex('Sumo Squat', '🏆', 'Adductors', 3, 12, 60),
+      ],
     },
   ],
   saturday: [

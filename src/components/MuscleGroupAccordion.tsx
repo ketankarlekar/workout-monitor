@@ -12,7 +12,7 @@ interface Props {
   accentColor: string;
   onAddExercise: (mgName: string, mgId: string) => void;
   onNotes: (exercise: Exercise) => void;
-  onDelete: (exercise: Exercise, mgId: string) => void;
+  onDelete: (exercise: Exercise) => void;
 }
 
 export function MuscleGroupAccordion({ mg, wType, accentColor, onAddExercise, onNotes, onDelete }: Props) {
@@ -41,7 +41,7 @@ export function MuscleGroupAccordion({ mg, wType, accentColor, onAddExercise, on
               onToggle={() => toggleEx(wType, mg.id, ex.id)}
               onUpdate={(field, val) => updateEx(wType, mg.id, ex.id, field, val)}
               onNotes={() => onNotes(ex)}
-              onDelete={() => onDelete(ex, mg.id)}
+              onDelete={() => onDelete(ex)}
             />
           ))}
           <TouchableOpacity

@@ -37,6 +37,9 @@ export default function WorkoutScreen({ workoutType }: Props) {
   const totalEx = muscleGroups.reduce((sum, mg) => sum + mg.exercises.length, 0);
   const doneEx = muscleGroups.reduce((sum, mg) => sum + mg.exercises.filter(e => e.completed).length, 0);
   const pct = totalEx > 0 ? Math.round((doneEx / totalEx) * 100) : 0;
+  const totalVolume = muscleGroups.reduce((sum, mg) =>
+    sum + mg.exercises.reduce((s, e) => s + (e.weight ? e.sets * e.reps * e.weight : 0), 0), 0
+  );
 
   const handleSave = () => {
     saveSession(workoutType);
@@ -56,9 +59,6 @@ export default function WorkoutScreen({ workoutType }: Props) {
           <Text style={[styles.headerTitle, { color: cfg.color }]}>{cfg.emoji} {cfg.title}</Text>
           <Text style={[styles.headerSub, { color: c.text2 }]}>{cfg.sub}</Text>
         </View>
-        <TouchableOpacity style={[styles.startBtn, { backgroundColor: cfg.color }]} onPress={() => toastRef.current?.show('Workout started! 💪')}>
-          <Text style={{ color: '#000', fontSize: 13, fontWeight: '700' }}>Start</Text>
-        </TouchableOpacity>
       </View>
 
       {/* Progress bar */}
@@ -67,7 +67,9 @@ export default function WorkoutScreen({ workoutType }: Props) {
           <View style={[styles.progressFill, { width: `${pct}%`, backgroundColor: cfg.color }]} />
         </View>
         <View style={styles.progressLabel}>
-          <Text style={[styles.progressTxt, { color: c.text3 }]}>{doneEx} / {totalEx} exercises done</Text>
+          <Text style={[styles.progressTxt, { color: c.text3 }]}>
+            {doneEx} / {totalEx} done{totalVolume > 0 ? ` · ${totalVolume.toLocaleString()} kg vol` : ''}
+          </Text>
           <Text style={[styles.progressTxt, { color: c.text3 }]}>{pct}%</Text>
         </View>
       </View>
@@ -148,7 +150,6 @@ const styles = StyleSheet.create({
   backBtn: { width: 36, height: 36, borderRadius: 10, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   headerTitle: { fontSize: 20, fontWeight: '800', letterSpacing: -0.5 },
   headerSub: { fontSize: 13, marginTop: 2 },
-  startBtn: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: R.md },
   progressWrap: { paddingHorizontal: 20, paddingVertical: 12, borderBottomWidth: 1 },
   progressBg: { height: 6, borderRadius: 99, overflow: 'hidden' },
   progressFill: { height: '100%', borderRadius: 99 },

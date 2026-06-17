@@ -4,6 +4,7 @@ import { WorkoutType, MuscleGroup, WorkoutSession, Stats, Exercise } from '../ty
 import { cloneWorkout } from '../constants/workoutData';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { useAuth } from './AuthContext';
+import { fmtDate } from '../utils/date';
 
 interface State {
   activeWorkouts: Record<WorkoutType, MuscleGroup[]>;
@@ -22,20 +23,16 @@ type Action =
   | { type: 'ADD_EX'; wType: WorkoutType; mgId: string; exercise: Exercise }
   | { type: 'DELETE_EX'; wType: WorkoutType; mgId: string; exId: string }
   | { type: 'UPDATE_NOTES'; wType: WorkoutType; mgId: string; exId: string; notes: string }
-  | { type: 'SAVE_SESSION'; wType: WorkoutType }
+  | { type: 'SAVE_SESSION'; wType: WorkoutType; startedAt?: string }
   | { type: 'LOAD_SESSIONS'; sessions: WorkoutSession[] }
   | { type: 'SET_DAY_NOTE'; date: string; notes: string }
   | { type: 'LOAD_DAY_NOTES'; dayNotes: Record<string, string>; dayNotesUpdatedAt: Record<string, string> };
-
-function localDateStr(d = new Date()): string {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-}
 
 function computeStats(sessions: WorkoutSession[]): Stats {
   const total = sessions.length;
   const sorted = [...sessions].sort((a, b) => b.date.localeCompare(a.date));
   const weekAgo = new Date(Date.now() - 7 * 86400000);
-  const thisWeek = sessions.filter(s => s.date >= localDateStr(weekAgo)).length;
+  const thisWeek = sessions.filter(s => s.date >= fmtDate(weekAgo)).length;
   const last = sorted[0];
 
   let streak = 0;
@@ -43,7 +40,7 @@ function computeStats(sessions: WorkoutSession[]): Stats {
   let cur = 0;
   const datesSet = new Set(sessions.map(s => s.date));
   let d = new Date();
-  while (datesSet.has(localDateStr(d))) {
+  while (datesSet.has(fmtDate(d))) {
     streak++;
     d.setDate(d.getDate() - 1);
   }
@@ -181,12 +178,14 @@ function reducer(state: State, action: Action): State {
       };
     }
     case 'SAVE_SESSION': {
+      const now = new Date().toISOString();
       const session: WorkoutSession = {
-        id: Date.now().toString(),
+        id: `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
         type: action.wType,
-        date: localDateStr(),
+        date: fmtDate(new Date()),
         muscleGroups: state.activeWorkouts[action.wType],
-        completedAt: new Date().toISOString(),
+        startedAt: action.startedAt,
+        completedAt: now,
       };
       const sessions = [session, ...state.sessions];
       return {
@@ -246,7 +245,7 @@ interface WorkoutContextType {
   addEx: (wType: WorkoutType, mgId: string, exercise: Exercise) => void;
   deleteEx: (wType: WorkoutType, mgId: string, exId: string) => void;
   updateNotes: (wType: WorkoutType, mgId: string, exId: string, notes: string) => void;
-  saveSession: (wType: WorkoutType) => void;
+  saveSession: (wType: WorkoutType, startedAt?: string) => void;
   setDayNote: (date: string, notes: string) => void;
 }
 
@@ -396,7 +395,7 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
       addEx: (wType, mgId, exercise) => dispatch({ type: 'ADD_EX', wType, mgId, exercise }),
       deleteEx: (wType, mgId, exId) => dispatch({ type: 'DELETE_EX', wType, mgId, exId }),
       updateNotes: (wType, mgId, exId, notes) => dispatch({ type: 'UPDATE_NOTES', wType, mgId, exId, notes }),
-      saveSession: (wType) => dispatch({ type: 'SAVE_SESSION', wType }),
+      saveSession: (wType, startedAt) => dispatch({ type: 'SAVE_SESSION', wType, startedAt }),
       setDayNote: (date, notes) => dispatch({ type: 'SET_DAY_NOTE', date, notes }),
     }}>
       {children}
